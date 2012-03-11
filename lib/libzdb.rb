@@ -1,3 +1,4 @@
+require 'libzdb/libzdb'
 require "libzdb/version"
 
 module Libzdb
