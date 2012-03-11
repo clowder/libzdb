@@ -1,13 +1,28 @@
-#include <ruby.h>
+#include <libzdb.h>
 
-static VALUE hello_world(VALUE mod)
+static void setup(VALUE self, VALUE url)
 {
-  return rb_str_new2("hello world");
+  VALUE args[1], pool;
+
+  args[0] = url;
+  pool    = rb_class_new_instance(1, args, cLibzdbConnectionPool);
+
+  rb_iv_set(self, "@connection_pool", pool);
 }
 
+static VALUE connection_pool(VALUE self)
+{
+  return rb_iv_get(self, "@connection_pool");
+}
+
+VALUE mLibzdb;
 void Init_libzdb()
 {
-  VALUE mLibzdb = rb_define_module("Libzdb");
-  rb_define_singleton_method(mLibzdb, "hello_world", hello_world, 0);
+  mLibzdb = rb_define_module("Libzdb");
+
+  rb_define_singleton_method(mLibzdb, "setup", setup, 1);
+  rb_define_singleton_method(mLibzdb, "connection_pool", connection_pool, 0);
+
+  init_connection_pool();
 }
 
