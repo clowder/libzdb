@@ -1,0 +1,4 @@
+Autotest.add_hook :run_command do |at|
+  system "rake --silent clean compile"
+end
+
