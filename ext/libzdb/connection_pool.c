@@ -6,12 +6,9 @@ static void deallocate(ConnectionPool_T *pool)
   ConnectionPool_free(pool);
 }
 
-/*
- * Wrap libzdb's connection pool in a ruby object
- */
 static VALUE allocate(VALUE klass)
 {
-  ConnectionPool_T *pool;
+  ConnectionPool_T *pool = malloc(sizeof(ConnectionPool_T));
   return Data_Wrap_Struct(klass, NULL, deallocate, pool);
 }
 
@@ -19,20 +16,15 @@ static VALUE initialize(VALUE self, VALUE rb_string)
 {
   Check_Type(rb_string, T_STRING);
 
-  ConnectionPool_T *poolPtr;
-  ConnectionPool_T pool;
-  URL_T url;
-  char *url_string;
+  ConnectionPool_T *pool;
+  
+  char *url_string = StringValueCStr(rb_string);
+  URL_T url        = URL_new(url_string);
 
-  Data_Get_Struct(self, ConnectionPool_T, poolPtr);
+  Data_Get_Struct(self, ConnectionPool_T, pool);
 
-  url_string = StringValueCStr(rb_string);
-  url        = URL_new(url_string);
-  pool       = ConnectionPool_new(url);
-
-  ConnectionPool_start(pool);
-
-  poolPtr = &pool;
+  *pool = ConnectionPool_new(url);
+  ConnectionPool_start(*pool);
 
   URL_free(&url);
 
