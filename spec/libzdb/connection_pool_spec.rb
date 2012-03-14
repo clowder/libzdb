@@ -1,0 +1,49 @@
+require 'spec_helper'
+
+describe Libzdb::ConnectionPool do
+  let(:tmp_db_path) { Pathname.new(File.dirname(__FILE__)).join('../../tmp/test.db') }
+  let(:schema) { <<-EOSQL }
+    CREATE TABLE cars (id INTEGER PRIMARY KEY, model TEXT, brand_id INTEGER, manufactured_at DATETIME);
+    CREATE TABLE brands (id INTEGER PRIMARY KEY, name TEXT);
+    INSERT INTO brands (name) VALUES ("Ford");
+    INSERT INTO brands (name) VALUES ("VW");
+    INSERT INTO cars (model, brand_id) VALUES ("Focus", (SELECT id FROM brands WHERE name = "Ford"));
+    INSERT INTO cars (model, brand_id) VALUES ("Golf", (SELECT id FROM brands WHERE name = "VW"));
+    UPDATE cars SET manufactured_at = CURRENT_TIMESTAMP;
+  EOSQL
+
+  before(:each) do
+    FileUtils.rm(tmp_db_path) if tmp_db_path.file?
+  end
+
+  describe ".new" do
+    it "works" do
+      connection_pool = Libzdb::ConnectionPool.new("sqlite://#{ tmp_db_path.to_s }")
+      tmp_db_path.should be_file
+    end
+  end
+
+  describe "#execute" do
+    subject { Libzdb::ConnectionPool.new("sqlite://#{ tmp_db_path.to_s }") }
+
+    it "returns the number of rows changed" do
+      result = subject.execute(schema)
+      result.should == 2
+    end
+  end
+
+  describe "#execute_query" do
+    subject { Libzdb::ConnectionPool.new("sqlite://#{ tmp_db_path.to_s }") }
+
+    let(:sql) { %Q{SELECT model FROM cars WHERE model = "Golf";} }
+
+    it "returns an array of hash objects" do
+      subject.execute(schema)
+      result = subject.execute_query(sql)
+
+      result.should be_instance_of(Array)
+      result.count.should == 1
+      result.first.should == { 'model' => 'Golf' }
+    end
+  end
+end

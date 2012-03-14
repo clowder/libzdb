@@ -1,5 +1,8 @@
 #include <libzdb.h>
 
+/*
+ * [Libzdb.setup] Configures a default [Libzdb::ConnectionPool]
+ */
 static void setup(VALUE self, VALUE url)
 {
   VALUE args[1], pool;
@@ -10,6 +13,9 @@ static void setup(VALUE self, VALUE url)
   rb_iv_set(self, "@connection_pool", pool);
 }
 
+/*
+ * [Libzdb.connection_pool] Returns the default [Libzdb::ConnectionPool]
+ */
 static VALUE connection_pool(VALUE self)
 {
   return rb_iv_get(self, "@connection_pool");
