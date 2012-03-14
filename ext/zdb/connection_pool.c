@@ -36,7 +36,7 @@ static VALUE initialize(VALUE self, VALUE rb_string)
 }
 
 /*
- * [Libzdb::ConnectionPool#execute] Executes the given sql.
+ * [ZDB::ConnectionPool#execute] Executes the given sql.
  *
  * Returns the number of rows changed
  */
@@ -55,7 +55,7 @@ static VALUE execute(VALUE self, VALUE rb_string)
 }
 
 /*
- * [Libzdb::ConnectionPool#execute_query] Executes the given sql.
+ * [ZDB::ConnectionPool#execute_query] Executes the given sql.
  *
  * Returns an array of hashes
  */
@@ -90,16 +90,16 @@ static VALUE execute_query(VALUE self, VALUE rb_string)
 }
 
 
-VALUE cLibzdbConnectionPool;
+VALUE cZDBConnectionPool;
 void init_connection_pool()
 {
-  VALUE libzdb = rb_define_module("Libzdb");
-  VALUE klass  = rb_define_class_under(libzdb, "ConnectionPool", rb_cObject);
+  VALUE zdb   = rb_define_module("ZDB");
+  VALUE klass = rb_define_class_under(zdb, "ConnectionPool", rb_cObject);
 
-  cLibzdbConnectionPool = klass;
+  cZDBConnectionPool = klass;
 
-  rb_define_alloc_func(cLibzdbConnectionPool, allocate);
-  rb_define_method(cLibzdbConnectionPool, "initialize", initialize, 1);
-  rb_define_method(cLibzdbConnectionPool, "execute", execute, 1);
-  rb_define_method(cLibzdbConnectionPool, "execute_query", execute_query, 1);
+  rb_define_alloc_func(cZDBConnectionPool, allocate);
+  rb_define_method(cZDBConnectionPool, "initialize", initialize, 1);
+  rb_define_method(cZDBConnectionPool, "execute", execute, 1);
+  rb_define_method(cZDBConnectionPool, "execute_query", execute_query, 1);
 }

@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Libzdb::ConnectionPool do
+describe ZDB::ConnectionPool do
   let(:tmp_db_path) { Pathname.new(File.dirname(__FILE__)).join('../../tmp/test.db') }
   let(:schema) { <<-EOSQL }
     CREATE TABLE cars (id INTEGER PRIMARY KEY, model TEXT, brand_id INTEGER, manufactured_at DATETIME);
@@ -18,13 +18,13 @@ describe Libzdb::ConnectionPool do
 
   describe ".new" do
     it "works" do
-      connection_pool = Libzdb::ConnectionPool.new("sqlite://#{ tmp_db_path.to_s }")
+      connection_pool = ZDB::ConnectionPool.new("sqlite://#{ tmp_db_path.to_s }")
       tmp_db_path.should be_file
     end
   end
 
   describe "#execute" do
-    subject { Libzdb::ConnectionPool.new("sqlite://#{ tmp_db_path.to_s }") }
+    subject { ZDB::ConnectionPool.new("sqlite://#{ tmp_db_path.to_s }") }
 
     it "returns the number of rows changed" do
       result = subject.execute(schema)
@@ -33,7 +33,7 @@ describe Libzdb::ConnectionPool do
   end
 
   describe "#execute_query" do
-    subject { Libzdb::ConnectionPool.new("sqlite://#{ tmp_db_path.to_s }") }
+    subject { ZDB::ConnectionPool.new("sqlite://#{ tmp_db_path.to_s }") }
 
     let(:sql) { %Q{SELECT model FROM cars WHERE model = "Golf";} }
 

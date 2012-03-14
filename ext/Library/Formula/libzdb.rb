@@ -1,16 +1,8 @@
 require 'formula'
 
-def disable_mysql?
-  ARGV.include? '--disable-mysql'
-end
-
-def disable_postgresql?
-  ARGV.include? '--disable-postgresql'
-end
-
-def disable_sqlite?
-  ARGV.include? '--disable-sqlite'
-end
+def disable_mysql?;      ARGV.include? '--disable-mysql';      end
+def disable_postgresql?; ARGV.include? '--disable-postgresql'; end
+def disable_sqlite?;     ARGV.include? '--disable-sqlite';     end
 
 class Libzdb < Formula
   homepage 'http://tildeslash.com/libzdb/'
@@ -22,8 +14,7 @@ class Libzdb < Formula
   depends_on 'sqlite'   unless disable_sqlite?
 
   def install
-    system "./configure", "--disable-debug", "--disable-dependency-tracking",
-                          "--prefix=#{prefix}"
+    system "./configure", "--disable-debug", "--disable-dependency-tracking", "--prefix=#{prefix}"
     system "make install"
   end
 end

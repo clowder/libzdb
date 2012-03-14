@@ -1,6 +1,5 @@
-require 'libzdb/libzdb'
-require "libzdb/version"
+require 'zdb'
 
 module Libzdb
-  # Your code goes here...
+  autoload :VERSION, 'libzdb/version'
 end

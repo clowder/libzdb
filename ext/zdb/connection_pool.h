@@ -1,10 +1,10 @@
 #ifndef ZDB_CONNECTION_POOL
 #define ZDB_CONNECTION_POOL
 
-#include <libzdb.h>
+#include <zdb.h>
 
 void init_connection_pool();
 
-extern VALUE cLibzdbConnectionPool;
+extern VALUE cZDBConnectionPool;
 
 #endif
