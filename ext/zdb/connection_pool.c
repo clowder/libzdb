@@ -28,6 +28,7 @@ static VALUE initialize(VALUE self, VALUE rb_string)
   URL_T url              = URL_new(url_string);
 
   *pool = ConnectionPool_new(url);
+  ConnectionPool_setReaper(*pool, 60);
   ConnectionPool_start(*pool);
 
   URL_free(&url);
