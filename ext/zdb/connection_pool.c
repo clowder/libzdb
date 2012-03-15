@@ -31,8 +31,6 @@ static VALUE initialize(VALUE self, VALUE rb_string)
   ConnectionPool_setReaper(*pool, 60);
   ConnectionPool_start(*pool);
 
-  URL_free(&url);
-
   return self;
 }
 
@@ -90,6 +88,47 @@ static VALUE execute_query(VALUE self, VALUE rb_string)
   return results;
 }
 
+/*
+ * [ZDB::ConnectionPool#size] The number of connections (active and inactive)
+ * in the connection pool.
+ *
+ * Returns an Integer
+ */
+static VALUE size(VALUE self)
+{
+  ConnectionPool_T *pool = get_pool_pointer(self);
+  int pool_size          = ConnectionPool_size(*pool);
+
+  return INT2NUM(pool_size);
+}
+
+/*
+ * [ZDB::ConnectionPool#active] The number of active connections in the
+ * connection pool.
+ *
+ * Returns an Integer
+ */
+static VALUE active(VALUE self)
+{
+  ConnectionPool_T *pool = get_pool_pointer(self);
+  int active_in_pool     = ConnectionPool_active(*pool);
+
+  return INT2NUM(active_in_pool);
+}
+
+/*
+ * [ZDB::ConnectionPool#url] The url the connection pool was configured with
+ *
+ * Returns a string
+ */
+static VALUE url(VALUE self)
+{
+  ConnectionPool_T *pool = get_pool_pointer(self);
+  URL_T url              = ConnectionPool_getURL(*pool);
+  char *url_string       = URL_toString(url);
+
+  return rb_str_new2(url_string);
+}
 
 VALUE cZDBConnectionPool;
 void init_connection_pool()
@@ -103,4 +142,7 @@ void init_connection_pool()
   rb_define_method(cZDBConnectionPool, "initialize", initialize, 1);
   rb_define_method(cZDBConnectionPool, "execute", execute, 1);
   rb_define_method(cZDBConnectionPool, "execute_query", execute_query, 1);
+  rb_define_method(cZDBConnectionPool, "active", active, 0);
+  rb_define_method(cZDBConnectionPool, "size", size, 0);
+  rb_define_method(cZDBConnectionPool, "url", url, 0);
 }
