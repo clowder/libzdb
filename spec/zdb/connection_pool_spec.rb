@@ -1,7 +1,8 @@
 require 'spec_helper'
 
 describe ZDB::ConnectionPool do
-  let(:tmp_db_path) { Pathname.new(File.dirname(__FILE__)).join('../../tmp/test.db') }
+  subject { ZDB::ConnectionPool.new("sqlite://#{ tmp_db_path.to_s }") }
+
   let(:schema) { <<-EOSQL }
     CREATE TABLE cars (id INTEGER PRIMARY KEY, model TEXT, brand_id INTEGER, manufactured_at DATETIME);
     CREATE TABLE brands (id INTEGER PRIMARY KEY, name TEXT);
@@ -12,10 +13,6 @@ describe ZDB::ConnectionPool do
     UPDATE cars SET manufactured_at = CURRENT_TIMESTAMP;
   EOSQL
 
-  before(:each) do
-    FileUtils.rm(tmp_db_path) if tmp_db_path.file?
-  end
-
   describe ".new" do
     it "works" do
       connection_pool = ZDB::ConnectionPool.new("sqlite://#{ tmp_db_path.to_s }")
@@ -24,7 +21,6 @@ describe ZDB::ConnectionPool do
   end
 
   describe "#execute" do
-    subject { ZDB::ConnectionPool.new("sqlite://#{ tmp_db_path.to_s }") }
 
     it "returns the number of rows changed" do
       result = subject.execute(schema)
@@ -33,8 +29,6 @@ describe ZDB::ConnectionPool do
   end
 
   describe "#execute_query" do
-    subject { ZDB::ConnectionPool.new("sqlite://#{ tmp_db_path.to_s }") }
-
     let(:sql) { %Q{SELECT model FROM cars WHERE model = "Golf";} }
 
     it "returns an array of hash objects" do
@@ -48,16 +42,12 @@ describe ZDB::ConnectionPool do
   end
 
   describe "#size" do
-    subject { ZDB::ConnectionPool.new("sqlite://#{ tmp_db_path.to_s }") }
-
     it "returns the number count of all connections in the pool" do
       subject.size.should == 5
     end
   end
 
   describe "#active" do
-    subject { ZDB::ConnectionPool.new("sqlite://#{ tmp_db_path.to_s }") }
-
     it "returns the number of _active_ connections in the pool" do
       subject.active.should == 0
     end
