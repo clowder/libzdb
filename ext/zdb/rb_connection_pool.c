@@ -1,4 +1,4 @@
-#include <connection_pool.h>
+#include <rb_connection_pool.h>
 
 static void deallocate(ConnectionPool_T *pool)
 {
@@ -12,7 +12,7 @@ static VALUE allocate(VALUE klass)
   return Data_Wrap_Struct(klass, NULL, deallocate, pool);
 }
 
-static ConnectionPool_T *get_pool_pointer(VALUE self)
+ConnectionPool_T *get_pool_pointer(VALUE self)
 {
   ConnectionPool_T *pool;
   Data_Get_Struct(self, ConnectionPool_T, pool);
@@ -32,60 +32,6 @@ static VALUE initialize(VALUE self, VALUE rb_string)
   ConnectionPool_start(*pool);
 
   return self;
-}
-
-/*
- * [ZDB::ConnectionPool#execute] Executes the given sql.
- *
- * Returns the number of rows changed
- */
-static VALUE execute(VALUE self, VALUE rb_string)
-{
-  Check_Type(rb_string, T_STRING);
-
-  char *sql               = StringValueCStr(rb_string);
-  VALUE results           = rb_ary_new();
-  ConnectionPool_T *pool  = get_pool_pointer(self);
-  Connection_T connection = ConnectionPool_getConnection(*pool);
-
-  Connection_execute(connection, sql);
-
-  return INT2NUM(Connection_rowsChanged(connection));
-}
-
-/*
- * [ZDB::ConnectionPool#execute_query] Executes the given sql.
- *
- * Returns an array of hashes
- */
-static VALUE execute_query(VALUE self, VALUE rb_string)
-{
-  Check_Type(rb_string, T_STRING);
-
-  char *sql               = StringValueCStr(rb_string);
-  VALUE results           = rb_ary_new();
-  ConnectionPool_T *pool  = get_pool_pointer(self);
-  Connection_T connection = ConnectionPool_getConnection(*pool);
-  ResultSet_T result_set  = Connection_executeQuery(connection, sql);
-  int column_count        = ResultSet_getColumnCount(result_set);
-  int index;
-
-  while (ResultSet_next(result_set))
-  {
-    VALUE row_hash = rb_hash_new();
-
-    for(index=column_count; index>0; index--)
-    {
-      char *column_name  = ResultSet_getColumnName(result_set, index);
-      char *column_value = ResultSet_getString(result_set, index);
-
-      rb_hash_aset(row_hash, rb_str_new2(column_name), rb_str_new2(column_value));
-    }
-
-    rb_ary_push(results, row_hash);
-  }
-
-  return results;
 }
 
 /*
@@ -140,8 +86,6 @@ void init_connection_pool()
 
   rb_define_alloc_func(cZDBConnectionPool, allocate);
   rb_define_method(cZDBConnectionPool, "initialize", initialize, 1);
-  rb_define_method(cZDBConnectionPool, "execute", execute, 1);
-  rb_define_method(cZDBConnectionPool, "execute_query", execute_query, 1);
   rb_define_method(cZDBConnectionPool, "active", active, 0);
   rb_define_method(cZDBConnectionPool, "size", size, 0);
   rb_define_method(cZDBConnectionPool, "url", url, 0);

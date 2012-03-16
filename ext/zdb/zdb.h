@@ -1,7 +1,13 @@
+#ifndef ZDB
+#define ZDB
+
 #include <ruby.h>
 
 #include <zdb/zdb.h>
 
-#include <connection_pool.h>
+#include <rb_connection_pool.h>
+#include <rb_connection.h>
 
 extern VALUE mZDB;
+
+#endif

@@ -30,5 +30,6 @@ void Init_zdb()
   rb_define_singleton_method(mZDB, "connection_pool", connection_pool, 0);
 
   init_connection_pool();
+  init_connection();
 }
 

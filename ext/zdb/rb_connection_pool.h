@@ -4,6 +4,7 @@
 #include <zdb.h>
 
 void init_connection_pool();
+ConnectionPool_T *get_pool_pointer(VALUE self);
 
 extern VALUE cZDBConnectionPool;
 
