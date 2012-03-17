@@ -60,4 +60,10 @@ describe ZDB::ConnectionPool do
       subject.url.should == "sqlite://#{ tmp_db_path.to_s }"
     end
   end
+
+  describe "#connection_pool" do
+    it "returns the pool that the connection was initialized with" do
+      subject.connection_pool.should == connection_pool
+    end
+  end
 end

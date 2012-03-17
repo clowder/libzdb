@@ -76,6 +76,19 @@ static VALUE url(VALUE self)
   return rb_str_new2(url_string);
 }
 
+/*
+ * [ZDB::ConnectionPool#get_connection]
+ *
+ * Returns a connection from the pool
+ */
+static VALUE get_connection(VALUE self)
+{
+  VALUE args[1];
+  args[0] = self;
+
+  return rb_class_new_instance(1, args, cZDBConnection);
+}
+
 VALUE cZDBConnectionPool;
 void init_connection_pool()
 {
@@ -89,4 +102,5 @@ void init_connection_pool()
   rb_define_method(cZDBConnectionPool, "active", active, 0);
   rb_define_method(cZDBConnectionPool, "size", size, 0);
   rb_define_method(cZDBConnectionPool, "url", url, 0);
+  rb_define_method(cZDBConnectionPool, "get_connection", get_connection, 0);
 }

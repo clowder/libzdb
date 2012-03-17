@@ -32,6 +32,8 @@ static VALUE initialize(VALUE self, VALUE connection_pool)
 
   *connection = ConnectionPool_getConnection(*pool);
 
+  rb_iv_set(self, "@connection_pool", connection_pool);
+
   return self;
 }
 
@@ -96,6 +98,11 @@ static VALUE url(VALUE self)
   return rb_str_new2(url_string);
 }
 
+static VALUE connection_pool(VALUE self)
+{
+  return rb_iv_get(self, "@connection_pool");
+}
+
 VALUE cZDBConnection;
 void init_connection()
 {
@@ -108,4 +115,5 @@ void init_connection()
   rb_define_method(cZDBConnection, "execute", execute, 1);
   rb_define_method(cZDBConnection, "execute_query", execute_query, 1);
   rb_define_method(cZDBConnection, "url", url, 0);
+  rb_define_method(cZDBConnection, "connection_pool", connection_pool, 0);
 }

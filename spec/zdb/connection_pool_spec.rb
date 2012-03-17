@@ -27,4 +27,13 @@ describe ZDB::ConnectionPool do
       subject.url.should == "sqlite://#{ tmp_db_path.to_s }"
     end
   end
+
+  describe "#get_connection" do
+    it "returns a new connection that belongs to the current pool" do
+      connection = subject.get_connection
+
+      connection.url.should == subject.url
+      connection.connection_pool.should == subject
+    end
+  end
 end
