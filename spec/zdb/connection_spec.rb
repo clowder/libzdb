@@ -43,7 +43,7 @@ describe ZDB::ConnectionPool do
   end
 
   describe "#execute_query" do
-    let(:sql) { %Q{SELECT model FROM cars WHERE model = "Golf";} }
+    let(:sql) { %Q{SELECT model FROM cars INNER JOIN brands on brands.id = cars.brand_id WHERE brands.name = "VW";} }
 
     it "returns an array of hash objects" do
       subject.execute(schema)
@@ -115,6 +115,74 @@ describe ZDB::ConnectionPool do
     context "the connection is **dead** (dum dum dum *dramtic reverb*)" do
       it "is false" do
         pending("Need a resonable testing strategy")
+      end
+    end
+  end
+
+  describe "#transaction" do
+    let(:second_conneciton) { connection_pool.get_connection }
+    let(:expected_tables)   { [{ "name" => "brands" }, { "name" => "cars" }] }
+
+    RSpec::Matchers.define :have_tables do |tables|
+      match do |connection|
+        sql = "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;"
+        tables == connection.execute_query(sql)
+      end
+    end
+
+    context "when not passed a block" do
+      it "explodes" do
+        expect {
+          subject.transaction
+        }.to raise_error(LocalJumpError, "no block given")
+      end
+    end
+
+    context "when passed a block" do
+      it "commits the transaction at the end of the block" do
+        subject.transaction do
+          subject.execute(schema)
+
+          subject.should have_tables(expected_tables) # We should be able to query inside the transaction
+          second_conneciton.should_not have_tables # From another connection we shouldn't see anything
+        end
+
+        second_conneciton.should have_tables(expected_tables) # Now we can query the commited data from all connections
+      end
+    end
+
+    context "rolling back" do
+      context "purposefully" do
+        it "does what you think it would" do
+          subject.transaction do
+            subject.execute(schema)
+            raise ZDB::Rollback
+          end
+
+          second_conneciton.should_not have_tables
+        end
+
+        it "doesn't propogate the error" do
+          expect {
+            subject.transaction do
+              subject.execute(schema)
+              raise ZDB::Rollback
+            end
+          }.to_not raise_error
+        end
+      end
+
+      context "by accident" do
+        it "rolls back the transaction and propogates the error" do
+          expect {
+            subject.transaction do
+              subject.execute(schema)
+              fail "This was an accident!"
+            end
+          }.to raise_error(RuntimeError, "This was an accident!")
+
+          second_conneciton.should_not have_tables
+        end
       end
     end
   end

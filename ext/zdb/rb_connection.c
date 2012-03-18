@@ -142,6 +142,37 @@ static VALUE ping(VALUE self)
   }
 }
 
+static VALUE transaction_inner(VALUE self)
+{
+  Connection_T *connection = get_connection_pointer(self);
+  Connection_beginTransaction(*connection);
+
+  return rb_yield(Qnil);
+}
+
+static VALUE transaction_handler(VALUE self, VALUE exception)
+{
+  Connection_T *connection = get_connection_pointer(self);
+
+  Connection_rollback(*connection);
+
+  if (!rb_obj_is_kind_of(exception, eZDBRollback)) {
+    rb_exc_raise(exception);
+  }
+
+  return exception;
+}
+
+static void transaction(VALUE self) {
+  rb_need_block();
+  Connection_T *connection = get_connection_pointer(self);
+  VALUE result             = rb_rescue(transaction_inner, self, transaction_handler, self);
+
+  if (!rb_obj_is_kind_of(result, eZDBRollback)) {
+    Connection_commit(*connection);
+  }
+}
+
 VALUE cZDBConnection;
 void init_connection()
 {
@@ -160,4 +191,5 @@ void init_connection()
   rb_define_method(cZDBConnection, "max_rows=", set_max_rows, 1);
   rb_define_method(cZDBConnection, "query_timeout=", set_query_timeout, 1);
   rb_define_method(cZDBConnection, "ping", ping, 0);
+  rb_define_method(cZDBConnection, "transaction", transaction, 0);
 }

@@ -9,5 +9,6 @@
 #include <rb_connection.h>
 
 extern VALUE mZDB;
+extern VALUE eZDBRollback;
 
 #endif

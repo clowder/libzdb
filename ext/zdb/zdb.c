@@ -22,9 +22,11 @@ static VALUE connection_pool(VALUE self)
 }
 
 VALUE mZDB;
+VALUE eZDBRollback;
 void Init_zdb()
 {
-  mZDB = rb_define_module("ZDB");
+  mZDB         = rb_define_module("ZDB");
+  eZDBRollback = rb_define_class_under(mZDB, "Rollback", rb_eStandardError);
 
   rb_define_singleton_method(mZDB, "setup", setup, 1);
   rb_define_singleton_method(mZDB, "connection_pool", connection_pool, 0);
