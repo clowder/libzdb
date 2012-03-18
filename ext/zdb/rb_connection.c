@@ -1,14 +1,9 @@
 #include <rb_connection.h>
 
-static void deallocate(Connection_T *connection)
-{
-  Connection_close(*connection);
-}
-
 static VALUE allocate(VALUE klass)
 {
-  Connection_T *connection = malloc(sizeof(Connection_T));
-  return Data_Wrap_Struct(klass, NULL, deallocate, connection);
+  Connection_T *connection;
+  return Data_Make_Struct(klass, Connection_T, NULL, NULL, connection);
 }
 
 static Connection_T *get_connection_pointer(VALUE self)

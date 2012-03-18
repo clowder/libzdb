@@ -8,8 +8,8 @@ static void deallocate(ConnectionPool_T *pool)
 
 static VALUE allocate(VALUE klass)
 {
-  ConnectionPool_T *pool = malloc(sizeof(ConnectionPool_T));
-  return Data_Wrap_Struct(klass, NULL, deallocate, pool);
+  ConnectionPool_T *pool;
+  return Data_Make_Struct(klass, ConnectionPool_T, NULL, deallocate, pool);
 }
 
 ConnectionPool_T *get_pool_pointer(VALUE self)
