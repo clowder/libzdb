@@ -66,4 +66,56 @@ describe ZDB::ConnectionPool do
       subject.connection_pool.should == connection_pool
     end
   end
+
+  describe "#query_timeout" do
+    it "returns the query timeout in milliseconds" do
+      subject.query_timeout.should == 3000
+    end
+  end
+
+  describe "#max_rows" do
+    it "returns the maximum number of rows that any query can return" do
+      subject.max_rows.should == 0
+    end
+  end
+
+  describe "#max_rows=" do
+    it "sets the maximum number of rows, 0 for no limit" do
+      subject.max_rows = 100
+      subject.max_rows.should == 100
+    end
+
+    it "type checks the incoming value" do
+      expect {
+        subject.max_rows = "foo"
+      }.to raise_error(TypeError)
+    end
+  end
+
+  describe "#query_timeout=" do
+    it "sets the query timeout, 0 for no limit" do
+      subject.query_timeout = 0
+      subject.query_timeout.should == 0
+    end
+
+    it "type checks the incoming value" do
+      expect {
+        subject.query_timeout = "foo"
+      }.to raise_error(TypeError)
+    end
+  end
+
+  describe "#ping" do
+    context "the connection is alive" do
+      it "is true" do
+        subject.ping.should be_true
+      end
+    end
+
+    context "the connection is **dead** (dum dum dum *dramtic reverb*)" do
+      it "is false" do
+        pending("Need a resonable testing strategy")
+      end
+    end
+  end
 end
