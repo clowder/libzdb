@@ -89,6 +89,34 @@ static VALUE get_connection(VALUE self)
   return rb_class_new_instance(1, args, cZDBConnection);
 }
 
+static VALUE initial_connections(VALUE self)
+{
+  ConnectionPool_T *pool = get_pool_pointer(self);
+  return INT2NUM(ConnectionPool_getInitialConnections(*pool));
+}
+
+static VALUE max_connections(VALUE self)
+{
+  ConnectionPool_T *pool = get_pool_pointer(self);
+  return INT2NUM(ConnectionPool_getMaxConnections(*pool));
+}
+
+static void set_initial_connections(VALUE self, VALUE rb_int)
+{
+  ConnectionPool_T *pool  = get_pool_pointer(self);
+  int initial_connections = NUM2INT(rb_int);
+
+  ConnectionPool_setInitialConnections(*pool, initial_connections);
+}
+
+static void set_max_connections(VALUE self, VALUE rb_int)
+{
+  ConnectionPool_T *pool = get_pool_pointer(self);
+  int max_connections = NUM2INT(rb_int);
+
+  ConnectionPool_setMaxConnections(*pool, max_connections);
+}
+
 VALUE cZDBConnectionPool;
 void init_connection_pool()
 {
@@ -103,4 +131,8 @@ void init_connection_pool()
   rb_define_method(cZDBConnectionPool, "size", size, 0);
   rb_define_method(cZDBConnectionPool, "url", url, 0);
   rb_define_method(cZDBConnectionPool, "get_connection", get_connection, 0);
+  rb_define_method(cZDBConnectionPool, "initial_connections", initial_connections, 0);
+  rb_define_method(cZDBConnectionPool, "max_connections", max_connections, 0);
+  rb_define_method(cZDBConnectionPool, "initial_connections=", set_initial_connections, 1);
+  rb_define_method(cZDBConnectionPool, "max_connections=", set_max_connections, 1);
 }
