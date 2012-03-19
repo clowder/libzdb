@@ -19,20 +19,6 @@ describe ZDB::ConnectionPool do
       connection = ZDB::Connection.new(connection_pool)
       connection.url.should == connection_pool.url
     end
-
-    context "invalid initialization" do
-      it "it blows if there is no connection pool" do
-        expect {
-          ZDB::Connection.new
-        }.to raise_error(ArgumentError)
-      end
-
-      it "blows if the incoming type is wrong" do
-        expect {
-          ZDB::Connection.new("sqlite://")
-        }.to raise_error(TypeError)
-      end
-    end
   end
 
   describe "#execute" do
