@@ -27,15 +27,37 @@ ConnectionPool_T *get_pool_pointer(VALUE self)
   return pool;
 }
 
-static VALUE initialize(VALUE self, VALUE rb_string)
+static VALUE initialize(int argc, VALUE *argv, VALUE self)
 {
-  Check_Type(rb_string, T_STRING);
+  VALUE rb_url_string, options_hash, rb_initial_connections, rb_max_connections;
+
+  // (int arg count, VALUE* args, char* "(no. required args)(no. optional args)", VALUE* individual args ...
+  rb_scan_args(argc, argv, "11", &rb_url_string, &options_hash);
+
+  Check_Type(rb_url_string, T_STRING);
 
   ConnectionPool_T *pool = get_pool_pointer(self);
-  char *url_string       = StringValueCStr(rb_string);
+  char *url_string       = StringValueCStr(rb_url_string);
   URL_T url              = URL_new(url_string);
 
   *pool = ConnectionPool_new(url);
+
+  if (!NIL_P(options_hash)) {
+    // Configure based on our options hash
+    Check_Type(options_hash, T_HASH);
+
+    rb_initial_connections = rb_hash_aref(options_hash, STRING2SYM("initial_connections"));
+    rb_max_connections     = rb_hash_aref(options_hash, STRING2SYM("max_connections"));
+
+    if (!NIL_P(rb_initial_connections)) {
+      ConnectionPool_setInitialConnections(*pool, NUM2INT(rb_initial_connections));
+    }
+
+    if (!NIL_P(rb_max_connections)) {
+      ConnectionPool_setMaxConnections(*pool, NUM2INT(rb_max_connections));
+    }
+  }
+
   ConnectionPool_setReaper(*pool, 60);
   ConnectionPool_start(*pool);
 
@@ -109,22 +131,6 @@ static VALUE max_connections(VALUE self)
   return INT2NUM(ConnectionPool_getMaxConnections(*pool));
 }
 
-static void set_initial_connections(VALUE self, VALUE rb_int)
-{
-  ConnectionPool_T *pool  = get_pool_pointer(self);
-  int initial_connections = NUM2INT(rb_int);
-
-  ConnectionPool_setInitialConnections(*pool, initial_connections);
-}
-
-static void set_max_connections(VALUE self, VALUE rb_int)
-{
-  ConnectionPool_T *pool = get_pool_pointer(self);
-  int max_connections = NUM2INT(rb_int);
-
-  ConnectionPool_setMaxConnections(*pool, max_connections);
-}
-
 VALUE cZDBConnectionPool;
 void init_connection_pool()
 {
@@ -134,13 +140,11 @@ void init_connection_pool()
   cZDBConnectionPool = klass;
 
   rb_define_alloc_func(cZDBConnectionPool, allocate);
-  rb_define_method(cZDBConnectionPool, "initialize", initialize, 1);
+  rb_define_method(cZDBConnectionPool, "initialize", initialize, -1);
   rb_define_method(cZDBConnectionPool, "active", active, 0);
   rb_define_method(cZDBConnectionPool, "size", size, 0);
   rb_define_method(cZDBConnectionPool, "url", url, 0);
   rb_define_method(cZDBConnectionPool, "get_connection", get_connection, 0);
   rb_define_method(cZDBConnectionPool, "initial_connections", initial_connections, 0);
   rb_define_method(cZDBConnectionPool, "max_connections", max_connections, 0);
-  rb_define_method(cZDBConnectionPool, "initial_connections=", set_initial_connections, 1);
-  rb_define_method(cZDBConnectionPool, "max_connections=", set_max_connections, 1);
 }

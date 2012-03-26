@@ -13,6 +13,8 @@
 
 #include <zdb/zdb.h>
 
+#define STRING2SYM(str) ID2SYM(rb_intern(str))
+
 #include <rb_connection_pool.h>
 #include <rb_connection.h>
 
