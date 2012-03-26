@@ -22,11 +22,10 @@ static Connection_T *get_connection_pointer(VALUE self)
 }
 
 /*
- * [ZDB::Connection#new]
+ * Returns a new connection in the given pool.
  *
- * Requires [ZDB::ConnectionPool]
- *
- * Returns [ZDB::Connection]
+ * @param [ZDB::ConnectionPool] connection_pool the parent pool for the connection
+ * @return [ZDB::Connection]
  */
 static VALUE initialize(VALUE self, VALUE connection_pool)
 {
@@ -41,9 +40,10 @@ static VALUE initialize(VALUE self, VALUE connection_pool)
 }
 
 /*
- * [ZDB::Connection#execute] Executes the given sql.
+ * Execute the sql on the connection.
  *
- * Returns the number of rows changed
+ * @param [String] rb_string the SQL to be executed
+ * @return [Fixnum] the number for rows changed by the execute
  */
 static VALUE execute(VALUE self, VALUE rb_string)
 {
@@ -59,9 +59,10 @@ static VALUE execute(VALUE self, VALUE rb_string)
 }
 
 /*
- * [ZDB::Connection#execute_query] Executes the given sql.
+ * Query the database with the given sql.
  *
- * Returns an array of hashes
+ * @param [String] rb_string the SQL to use for the query
+ * @return [Array<Hash>] an array of hashes that contain the query results
  */
 static VALUE execute_query(VALUE self, VALUE rb_string)
 {
@@ -92,6 +93,11 @@ static VALUE execute_query(VALUE self, VALUE rb_string)
   return results;
 }
 
+/*
+ * The url for the current connection.
+ *
+ * @return [String]
+ */
 static VALUE url(VALUE self)
 {
   Connection_T *connection = get_connection_pointer(self);
@@ -101,11 +107,21 @@ static VALUE url(VALUE self)
   return rb_str_new2(url_string);
 }
 
+/*
+ * The parent pool object.
+ *
+ * @return [ZDB::ConnectionPool]
+ */
 static VALUE connection_pool(VALUE self)
 {
   return rb_iv_get(self, "@connection_pool");
 }
 
+/*
+ * The length of time (in millieseconds) to wait for a query to finish running.
+ *
+ * @return [Fixnum] the timeout in milliseconds
+ */
 static VALUE query_timeout(VALUE self)
 {
   Connection_T *connection = get_connection_pointer(self);
@@ -114,6 +130,11 @@ static VALUE query_timeout(VALUE self)
   return INT2NUM(timeout);
 }
 
+/*
+ * The maximum number of rows a query can return.
+ *
+ * @return [Fixnum]
+ */
 static VALUE max_rows(VALUE self)
 {
   Connection_T *connection = get_connection_pointer(self);
@@ -122,6 +143,11 @@ static VALUE max_rows(VALUE self)
   return INT2NUM(max);
 }
 
+/*
+ * The maximum number of rows a query can return.
+ *
+ * @param [Fixnum] rb_int the new max
+ */
 static void set_max_rows(VALUE self, VALUE rb_int)
 {
   int max                  = NUM2INT(rb_int);
@@ -130,6 +156,11 @@ static void set_max_rows(VALUE self, VALUE rb_int)
   Connection_setMaxRows(*connection, max);
 }
 
+/*
+ * The length of time (in millieseconds) to wait for a query to finish running.
+ *
+ * @param [Fixnum] rb_int the new timeout in milliseconds
+ */
 static void set_query_timeout(VALUE self, VALUE rb_int)
 {
   int timeout              = NUM2INT(rb_int);
@@ -138,6 +169,11 @@ static void set_query_timeout(VALUE self, VALUE rb_int)
   Connection_setQueryTimeout(*connection, timeout);
 }
 
+/*
+ * Ping the connection to see if its still alive.
+ *
+ * @return [true, false]
+ */
 static VALUE ping(VALUE self)
 {
   Connection_T *connection = get_connection_pointer(self);
@@ -171,7 +207,42 @@ static VALUE transaction_handler(VALUE self, VALUE exception)
   return exception;
 }
 
-static void transaction(VALUE self) {
+/*
+ * Execute the give block within an SQL transaction.
+ *
+ * Any [#execute] or [#execute_query] calls to this [ZDB#Connection] instance
+ * within the block will be executed within an SQL transaction, that will be
+ * commited at the end of the block.
+ *
+ * At anytime you can raise [ZDB::Rollback] to force the transaction to stop
+ * and rollback the transaction. It is important to not that [ZDB::Rollback]
+ * exceptions will be "eaten" by the transaction loop, and will not bubble up
+ * throught the application.
+ *
+ * Raising any other exception class will also cause the transaction to
+ * rollback. But, unlike [ZDB::Rollback], all other exception types will bubble
+ * up to to your application (i.e. not "eaten" by the transaction.
+ *
+ * @example Update a set of records within a transaction
+ *   connection = ZDB::ConnectionPool.new('sqlite:///tmp/test.db').get_connection
+ *   connection.transaction do
+ *     # Transfer between users
+ *     connection.execute(<<-EOSQL)
+ *       UPDATE user
+ *       SET balance=((SELECT balance FROM user WHERE user.name = 'clowder')-100)
+ *       WHERE user.name = "clowder";"
+ *     EOSQL
+ *
+ *     connection.execute(<<-EOSQL)
+ *       UPDATE user
+ *       SET balance=((SELECT balance FROM user WHERE user.name = 'lsharp')+100)
+ *       WHERE user.name = "lsharp";"
+ *     EOSQL
+ *   end
+ *
+ */
+static void transaction(VALUE self)
+{
   rb_need_block();
   Connection_T *connection = get_connection_pointer(self);
   VALUE result             = rb_rescue(transaction_inner, self, transaction_handler, self);
