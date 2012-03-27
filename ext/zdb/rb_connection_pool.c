@@ -111,12 +111,18 @@ static VALUE url(VALUE self)
  *
  * Returns a connection from the pool
  */
-static VALUE get_connection(VALUE self)
+static VALUE get_connection(int argc, VALUE *argv, VALUE self)
 {
-  VALUE args[1];
-  args[0] = self;
+  VALUE options[argc+1];
+  int index;
 
-  return rb_class_new_instance(1, args, cZDBConnection);
+  options[0] = self;
+
+  for (index = 0; index < argc; index++) {
+    options[index+1] = argv[index];
+  }
+
+  return rb_class_new_instance(sizeof(options)/SIZEOF_VALUE, options, cZDBConnection);
 }
 
 static VALUE initial_connections(VALUE self)
@@ -144,7 +150,7 @@ void init_connection_pool()
   rb_define_method(cZDBConnectionPool, "active", active, 0);
   rb_define_method(cZDBConnectionPool, "size", size, 0);
   rb_define_method(cZDBConnectionPool, "url", url, 0);
-  rb_define_method(cZDBConnectionPool, "get_connection", get_connection, 0);
+  rb_define_method(cZDBConnectionPool, "get_connection", get_connection, -1);
   rb_define_method(cZDBConnectionPool, "initial_connections", initial_connections, 0);
   rb_define_method(cZDBConnectionPool, "max_connections", max_connections, 0);
 }

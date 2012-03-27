@@ -46,11 +46,25 @@ describe ZDB::ConnectionPool do
   end
 
   describe "#get_connection" do
-    it "returns a new connection that belongs to the current pool" do
-      connection = subject.get_connection
+    let(:args) { Hash[:max_rows => 100, :query_timeout => 10] }
 
-      connection.url.should == subject.url
-      connection.connection_pool.should == subject
+    context "no args" do
+      it "returns a new connection that belongs to the current pool" do
+        connection = subject.get_connection
+
+        connection.url.should == subject.url
+        connection.connection_pool.should == subject
+      end
+    end
+
+    context "with args" do
+      it "returns a properly configured connection in the current pool" do
+        connection = subject.get_connection(args)
+
+        connection.connection_pool.should == subject
+        connection.max_rows.should == 100
+        connection.query_timeout == 10
+      end
     end
   end
 end
