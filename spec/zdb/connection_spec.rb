@@ -15,9 +15,26 @@ describe ZDB::ConnectionPool do
   EOSQL
 
   describe ".new" do
-    it "returns a connection in the given connection pool" do
-      connection = ZDB::Connection.new(connection_pool)
-      connection.url.should == connection_pool.url
+    context "no args" do
+      it "configures the instance properly" do
+        connection = ZDB::Connection.new(connection_pool)
+
+        connection.connection_pool.should == connection_pool
+        connection.url.should == connection_pool.url
+        connection.query_timeout.should == 3000
+        connection.max_rows.should == 0
+      end
+    end
+
+    context "with args" do
+      let(:args) { Hash[:max_rows => 100, :query_timeout => 10] }
+
+      it "configures the instance properly" do
+        connection = ZDB::Connection.new(connection_pool, args)
+
+        connection.max_rows.should == 100
+        connection.query_timeout.should == 10
+      end
     end
   end
 
@@ -38,56 +55,6 @@ describe ZDB::ConnectionPool do
       result.should be_instance_of(Array)
       result.count.should == 1
       result.first.should == { 'model' => 'Golf' }
-    end
-  end
-
-  describe "#url" do
-    it "returns the url the connection was started on" do
-      subject.url.should == "sqlite://#{ tmp_db_path.to_s }"
-    end
-  end
-
-  describe "#connection_pool" do
-    it "returns the pool that the connection was initialized with" do
-      subject.connection_pool.should == connection_pool
-    end
-  end
-
-  describe "#query_timeout" do
-    it "returns the query timeout in milliseconds" do
-      subject.query_timeout.should == 3000
-    end
-  end
-
-  describe "#max_rows" do
-    it "returns the maximum number of rows that any query can return" do
-      subject.max_rows.should == 0
-    end
-  end
-
-  describe "#max_rows=" do
-    it "sets the maximum number of rows, 0 for no limit" do
-      subject.max_rows = 100
-      subject.max_rows.should == 100
-    end
-
-    it "type checks the incoming value" do
-      expect {
-        subject.max_rows = "foo"
-      }.to raise_error(TypeError)
-    end
-  end
-
-  describe "#query_timeout=" do
-    it "sets the query timeout, 0 for no limit" do
-      subject.query_timeout = 0
-      subject.query_timeout.should == 0
-    end
-
-    it "type checks the incoming value" do
-      expect {
-        subject.query_timeout = "foo"
-      }.to raise_error(TypeError)
     end
   end
 

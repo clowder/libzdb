@@ -28,12 +28,29 @@ static Connection_T *get_connection_pointer(VALUE self)
  *
  * Returns [ZDB::Connection]
  */
-static VALUE initialize(VALUE self, VALUE connection_pool)
+static VALUE initialize(int argc, VALUE *argv, VALUE self)
 {
+  VALUE connection_pool, options_hash, max_rows, query_timeout;
+
+  rb_scan_args(argc, argv, "11", &connection_pool, &options_hash);
+
   ConnectionPool_T *pool   = get_pool_pointer(connection_pool);
   Connection_T *connection = get_connection_pointer(self);
 
   *connection = ConnectionPool_getConnection(*pool);
+
+  if (!NIL_P(options_hash)) {
+    max_rows = rb_hash_aref(options_hash, STRING2SYM("max_rows"));
+    query_timeout = rb_hash_aref(options_hash, STRING2SYM("query_timeout"));
+
+    if (!NIL_P(max_rows)) {
+      Connection_setMaxRows(*connection, NUM2INT(max_rows));
+    }
+
+    if (!NIL_P(query_timeout)) {
+      Connection_setQueryTimeout(*connection, NUM2INT(query_timeout));
+    }
+  }
 
   rb_iv_set(self, "@connection_pool", connection_pool);
 
@@ -122,22 +139,6 @@ static VALUE max_rows(VALUE self)
   return INT2NUM(max);
 }
 
-static void set_max_rows(VALUE self, VALUE rb_int)
-{
-  int max                  = NUM2INT(rb_int);
-  Connection_T *connection = get_connection_pointer(self);
-
-  Connection_setMaxRows(*connection, max);
-}
-
-static void set_query_timeout(VALUE self, VALUE rb_int)
-{
-  int timeout              = NUM2INT(rb_int);
-  Connection_T *connection = get_connection_pointer(self);
-
-  Connection_setQueryTimeout(*connection, timeout);
-}
-
 static VALUE ping(VALUE self)
 {
   Connection_T *connection = get_connection_pointer(self);
@@ -189,15 +190,13 @@ void init_connection()
   cZDBConnection = rb_define_class_under(mZDB, "Connection", rb_cObject);
 
   rb_define_alloc_func(cZDBConnection, allocate);
-  rb_define_method(cZDBConnection, "initialize", initialize, 1);
+  rb_define_method(cZDBConnection, "initialize", initialize, -1);
   rb_define_method(cZDBConnection, "execute", execute, 1);
   rb_define_method(cZDBConnection, "execute_query", execute_query, 1);
   rb_define_method(cZDBConnection, "url", url, 0);
   rb_define_method(cZDBConnection, "connection_pool", connection_pool, 0);
   rb_define_method(cZDBConnection, "query_timeout", query_timeout, 0);
   rb_define_method(cZDBConnection, "max_rows", max_rows, 0);
-  rb_define_method(cZDBConnection, "max_rows=", set_max_rows, 1);
-  rb_define_method(cZDBConnection, "query_timeout=", set_query_timeout, 1);
   rb_define_method(cZDBConnection, "ping", ping, 0);
   rb_define_method(cZDBConnection, "transaction", transaction, 0);
 }
