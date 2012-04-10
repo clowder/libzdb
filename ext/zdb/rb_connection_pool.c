@@ -124,7 +124,8 @@ static VALUE url(VALUE self)
  */
 static VALUE get_connection(int argc, VALUE *argv, VALUE self)
 {
-  VALUE options[argc+1];
+  int options_length = argc + 1;
+  VALUE options[options_length];
   int index;
 
   options[0] = self;
@@ -133,7 +134,7 @@ static VALUE get_connection(int argc, VALUE *argv, VALUE self)
     options[index+1] = argv[index];
   }
 
-  return rb_class_new_instance(sizeof(options)/SIZEOF_VALUE, options, cZDBConnection);
+  return rb_class_new_instance(options_length, options, cZDBConnection);
 }
 
 static VALUE initial_connections(VALUE self)
