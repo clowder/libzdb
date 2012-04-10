@@ -31,6 +31,14 @@ describe ZDB::ConnectionPool do
         pool.url.should == uri
       end
     end
+
+    context "handling the underlying C objects aborting" do
+      it "raises an appropriate error" do
+        expect {
+          ZDB::ConnectionPool.new("mysql://foo:bar@192.168.0.0/foo_bar")
+        }.to raise_error(ZDB::ConnectionPool::Exception)
+      end
+    end
   end
 
   describe "#size" do

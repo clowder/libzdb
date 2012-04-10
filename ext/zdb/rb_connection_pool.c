@@ -27,6 +27,16 @@ ConnectionPool_T *get_pool_pointer(VALUE self)
   return pool;
 }
 
+static void errorHandler(char *newline_terminated_message)
+{
+  int message_length = strlen(newline_terminated_message) - 1;
+  char message[message_length];
+
+  strncpy(&message, newline_terminated_message, message_length);
+
+  rb_raise(eZDBConnectionPool, message);
+}
+
 static VALUE initialize(int argc, VALUE *argv, VALUE self)
 {
   VALUE rb_url_string, options_hash, rb_initial_connections, rb_max_connections;
@@ -59,6 +69,7 @@ static VALUE initialize(int argc, VALUE *argv, VALUE self)
   }
 
   ConnectionPool_setReaper(*pool, 60);
+  ConnectionPool_setAbortHandler(*pool, errorHandler);
   ConnectionPool_start(*pool);
 
   return self;
@@ -138,12 +149,15 @@ static VALUE max_connections(VALUE self)
 }
 
 VALUE cZDBConnectionPool;
+VALUE eZDBConnectionPool;
+
 void init_connection_pool()
 {
-  VALUE zdb   = rb_define_module("ZDB");
-  VALUE klass = rb_define_class_under(zdb, "ConnectionPool", rb_cObject);
+  VALUE zdb = rb_define_module("ZDB");
 
-  cZDBConnectionPool = klass;
+  cZDBConnectionPool = rb_define_class_under(zdb, "ConnectionPool", rb_cObject);
+  eZDBConnectionPool = rb_define_class_under(cZDBConnectionPool, "Exception", rb_eStandardError);
+
 
   rb_define_alloc_func(cZDBConnectionPool, allocate);
   rb_define_method(cZDBConnectionPool, "initialize", initialize, -1);
